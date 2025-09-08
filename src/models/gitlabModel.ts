@@ -12,6 +12,8 @@ export interface CodeResult {
   startline: number;
   data: string;
   project: any;
+  path: string; // 文件在项目中的相对路径
+  ref: string; // 文件所在的分支或标签
 }
 
 export interface GitlabModelState {
@@ -123,6 +125,7 @@ const useGitlabModel = () => {
     }
     updateState({ projectTotal: projectsToSearch.length, projectSearched: 0 });
     const limit = pLimit(5);
+    const tempNum = projectSearched;
     let allResults: CodeResult[] = [];
     const promises = projectsToSearch.map((project) =>
       limit(async () => {
@@ -138,6 +141,8 @@ const useGitlabModel = () => {
             const handledResult = res.map((code: any) => ({
               ...code,
               project,
+              path: code.path, // 添加 path
+              ref: code.ref, // 添加 ref
               codeLines: code.data.split(/\n/g).length - 1,
               file_path: `${project.path_with_namespace}/blob/${code.ref}/${code.path}`,
             }));
@@ -147,7 +152,7 @@ const useGitlabModel = () => {
         } catch (error) {
           console.error(`Failed to search in project ${project.name}:`, error);
         }
-        updateState({ projectSearched: projectSearched + 1 });
+        updateState({ projectSearched: tempNum + 1 });
         // eslint-disable-next-line no-promise-executor-return
         await new Promise((resolve) => setTimeout(resolve, 500));
       }),

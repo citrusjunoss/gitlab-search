@@ -1,0 +1,45 @@
+image: $CI_REGISTRY/$CI_REGISTRY_NAMESPACE/node:20
+
+stages:
+  - build
+  - deploy # 定义部署阶段
+
+.cache_template: &cache_template
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+      - ~/.pnpm-store/
+
+
+.install_template: &install_template
+  before_script:
+    - npm set registry http://registry.qizhidao.net/
+    - corepack enable
+    - corepack prepare pnpm@latest-10 --activate
+    - pnpm set registry http://registry.qizhidao.net/
+    - pnpm config set store-dir ~/.pnpm-store/
+    # Setup NPM registry from .npmrc
+    - |
+      if [ -f ".npmrc" ]; then
+        cp .npmrc ~/.npmrc
+        echo "Using project .npmrc configuration"
+      else
+        echo "registry=http://registry.qizhidao.net/" > ~/.npmrc
+      fi
+    - pnpm install --frozen-lockfile
+
+pages:
+  stage: deploy
+  script:
+    - pnpm install --frozen-lockfile # 安装依赖，使用 lockfile 确保版本一致性
+    - pnpm run build # 执行项目构建命令
+    - rm -rf public # 清理旧的 public 目录
+    - mv dist public # 将构建产物（umijs 默认输出到 dist）移动到 public 目录
+  artifacts:
+    paths:
+      - public # 定义 public 目录为产物，GitLab Pages 会自动识别
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # 仅在默认分支（如 main/master）上运行

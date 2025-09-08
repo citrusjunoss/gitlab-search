@@ -1,5 +1,10 @@
 import SearchConditionForm from '@/components/search-condition-form';
-import { FilterOutlined } from '@ant-design/icons';
+import { exportToExcel } from '@/utils/exportToExcel';
+import {
+  BarChartOutlined,
+  DownloadOutlined,
+  FilterOutlined,
+} from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import {
   Button,
@@ -8,22 +13,24 @@ import {
   Form,
   Input,
   Layout,
+  Modal, // 导入 Modal
   Pagination,
   Row,
   Spin,
+  Table, // 导入 Table
   Typography,
 } from 'antd';
 import micromatch from 'micromatch';
 import React, { useEffect, useMemo, useState } from 'react';
 import './index.less';
 
-const { Title, Text } = Typography;
+const { Title, Text, Link } = Typography;
 
 const GitlabSearchPage: React.FC = () => {
   const {
     keyword,
     token,
-    branch, // 获取 branch
+    branch,
     selectGroups,
     selectGroups1,
     allGroups,
@@ -44,6 +51,7 @@ const GitlabSearchPage: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isStatsModalVisible, setIsStatsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -97,6 +105,31 @@ const GitlabSearchPage: React.FC = () => {
     return results;
   }, [codeResult, includePattern, excludePattern]);
 
+  const statsData = useMemo(() => {
+    const stats = new Map<
+      number,
+      {
+        index: number;
+        projectName: string;
+        projectLink: string;
+        files: string[];
+      }
+    >();
+    filteredCodeResult.forEach((item) => {
+      const project = item.project;
+      if (!stats.has(project.id)) {
+        stats.set(project.id, {
+          index: stats.size + 1,
+          projectName: project.name_with_namespace,
+          projectLink: project.web_url,
+          files: [],
+        });
+      }
+      stats.get(project.id)!.files.push(item.file_path);
+    });
+    return Array.from(stats.values());
+  }, [filteredCodeResult]);
+
   const paginatedCodeResult = filteredCodeResult.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
@@ -111,12 +144,43 @@ const GitlabSearchPage: React.FC = () => {
     form.resetFields();
   };
 
+  const onAnalyze = () => {
+    setIsStatsModalVisible(true);
+  };
+
+  const statsColumns = [
+    { title: '序号', dataIndex: 'index', key: 'index', width: 60 },
+    { title: '项目名称', dataIndex: 'projectName', key: 'projectName' },
+    {
+      title: '项目链接',
+      dataIndex: 'projectLink',
+      key: 'projectLink',
+      render: (link: string) => (
+        <Link href={link} target="_blank">
+          {link}
+        </Link>
+      ),
+    },
+    {
+      title: '文件列表',
+      dataIndex: 'files',
+      key: 'files',
+      render: (files: string[]) => (
+        <ul style={{ paddingLeft: '15px', margin: 0 }}>
+          {files.map((file, i) => (
+            <li key={i}>{file}</li>
+          ))}
+        </ul>
+      ),
+    },
+  ];
+
   return (
     <Layout className="layout">
       <SearchConditionForm
         allGroups={allGroups}
         keyword={keyword}
-        branch={branch} // 传递 branch
+        branch={branch}
         selectGroups={selectGroups}
         token={token}
         isExact={isExact}
@@ -176,39 +240,60 @@ const GitlabSearchPage: React.FC = () => {
               >
                 过滤
               </Button>
-              <Button htmlType="button" onClick={onReset}>
+              <Button
+                htmlType="button"
+                onClick={onReset}
+                style={{ marginRight: 20 }}
+              >
                 重置
+              </Button>
+              <Button
+                htmlType="button"
+                onClick={onAnalyze}
+                icon={<BarChartOutlined />}
+              >
+                统计
               </Button>
             </Form.Item>
           </Col>
         </Row>
       </Form>
+
       <Spin spinning={loading}>
-        {paginatedCodeResult?.map((code, index) => (
-          <Card
-            type="inner"
-            title={code.file_path}
-            className="content-code"
-            key={`${code.file_path}-${index}`}
-          >
-            <Row wrap={false}>
-              <Col flex="40px" className="content-code__line-number-border">
-                {[...Array(code.codeLines)].map((_, line) => (
-                  <div
-                    className="content-code__line-number-border__number"
-                    key={line}
-                  >{`${line + code.startline}`}</div>
-                ))}
-              </Col>
-              <Col
-                flex="auto"
-                className="content-code__line-number-border__code"
-              >
-                <pre>{code.data}</pre>
-              </Col>
-            </Row>
-          </Card>
-        ))}
+        {paginatedCodeResult?.map((code, index) => {
+          const fileLink = `${code.project.web_url}/-/blob/${code.ref}/${code.path}#L${code.startline}`;
+          return (
+            <Card
+              type="inner"
+              title={code.file_path}
+              className="content-code"
+              key={`${code.file_path}-${index}`}
+            >
+              <Row wrap={false}>
+                <Col flex="40px" className="content-code__line-number-border">
+                  {[...Array(code.codeLines)].map((_, line) => (
+                    <div
+                      className="content-code__line-number-border__number"
+                      key={line}
+                    >{`${line + code.startline}`}</div>
+                  ))}
+                </Col>
+                <Col
+                  flex="auto"
+                  className="content-code__line-number-border__code"
+                >
+                  <Link
+                    href={fileLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <pre>{code.data}</pre>
+                  </Link>
+                </Col>
+              </Row>
+            </Card>
+          );
+        })}
       </Spin>
 
       {filteredCodeResult.length > pageSize && (
@@ -221,6 +306,34 @@ const GitlabSearchPage: React.FC = () => {
           onChange={handlePaginationChange}
         />
       )}
+
+      <Modal
+        title="搜索结果统计"
+        open={isStatsModalVisible}
+        onCancel={() => setIsStatsModalVisible(false)}
+        footer={[
+          <Button key="back" onClick={() => setIsStatsModalVisible(false)}>
+            关闭
+          </Button>,
+          <Button
+            key="export"
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={() => exportToExcel(statsData)}
+          >
+            导出 Excel
+          </Button>,
+        ]}
+        width="80%"
+      >
+        <Table
+          columns={statsColumns}
+          dataSource={statsData}
+          rowKey="index"
+          pagination={false}
+          scroll={{ y: 500 }}
+        />
+      </Modal>
     </Layout>
   );
 };
