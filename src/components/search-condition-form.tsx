@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 interface Props {
   allGroups: Array<any>;
   keyword: string;
+  branch: string;
   selectGroups: Array<string>;
   token: string;
   includePattern: string;
@@ -19,6 +20,7 @@ interface Props {
 const SearchConditionForm: React.FunctionComponent<Props> = ({
   allGroups,
   keyword,
+  branch,
   selectGroups,
   selectGroups1,
   token,
@@ -31,10 +33,12 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
   useEffect(() => {
     form.setFieldsValue({
       keyword,
+      branch,
       selectGroups,
+      selectGroups1,
       token,
     });
-  }, [keyword, selectGroups, selectGroups1, token]);
+  }, [keyword, branch, selectGroups, selectGroups1, token]);
 
   const onFinish = (values: any) => {
     searchHandle(values);
@@ -45,7 +49,9 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
     updateState({
       keyword: '',
       token: '',
+      branch: '',
       selectGroups: [],
+      selectGroups1: '',
       includePattern: '',
       excludePattern: '',
     });
@@ -72,25 +78,16 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
       labelAlign="left"
     >
       <Row gutter={24}>
-        <Col span={8}>
-          <Form.Item
-            labelCol={{ span: 4 }}
-            wrapperCol={{ span: 20 }}
-            name="keyword"
-            label="关键字"
-            rules={[{ required: true, message: '请输入搜索关键字' }]}
-          >
+        <Col span={6}>
+          <Form.Item label="关键字" name="keyword" rules={[{ required: true }]}>
             <Input placeholder="请输入搜索关键字" allowClear />
           </Form.Item>
         </Col>
-
-        <Col span={8}>
+        <Col span={6}>
           <Form.Item
-            labelCol={{ span: 4 }}
-            wrapperCol={{ span: 20 }}
-            name="token"
             label="Token"
-            rules={[{ required: true, message: '请输入access token' }]}
+            name="token"
+            rules={[{ required: true }]}
             tooltip={{
               title: '可在gitlab中生成access token',
               icon: <InfoCircleOutlined />,
@@ -99,15 +96,9 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
             <Input placeholder="请输入access token" allowClear />
           </Form.Item>
         </Col>
-
-        <Col span={8}>
+        <Col span={6}>
           {isExact ? (
-            <Form.Item
-              labelCol={{ span: 4 }}
-              wrapperCol={{ span: 20 }}
-              name="selectGroups"
-              label="Group"
-            >
+            <Form.Item label="Group" name="selectGroups">
               <Select
                 showSearch
                 mode="multiple"
@@ -128,39 +119,37 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
               </Select>
             </Form.Item>
           ) : (
-            <Form.Item
-              labelCol={{ span: 4 }}
-              wrapperCol={{ span: 20 }}
-              name="selectGroups1"
-              label="Group"
-            >
+            <Form.Item label="Group" name="selectGroups1">
               <Input placeholder="请输入搜索关键字" allowClear />
             </Form.Item>
           )}
         </Col>
+        <Col span={6}>
+          <Form.Item label="分支/标签" name="branch">
+            <Input placeholder="默认为项目的默认分支" allowClear />
+          </Form.Item>
+        </Col>
       </Row>
       <Row gutter={24}>
         <Col span={8}>
-          <Form.Item labelCol={{ span: 0 }} wrapperCol={{ span: 24 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              style={{ marginRight: 20 }}
-              icon={<SearchOutlined />}
-            >
-              搜索
-            </Button>
-            <Button htmlType="button" onClick={onReset}>
-              重置
-            </Button>
-            <Switch
-              checkedChildren="精确群组"
-              unCheckedChildren="模糊群组"
-              style={{ marginLeft: 20 }}
-              checked={isExact}
-              onChange={onChange}
-            />
-          </Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{ marginRight: 20 }}
+            icon={<SearchOutlined />}
+          >
+            搜索
+          </Button>
+          <Button htmlType="button" onClick={onReset}>
+            重置
+          </Button>
+          <Switch
+            checkedChildren="精确群组"
+            unCheckedChildren="模糊群组"
+            style={{ marginLeft: 20 }}
+            checked={isExact}
+            onChange={onChange}
+          />
         </Col>
       </Row>
     </Form>

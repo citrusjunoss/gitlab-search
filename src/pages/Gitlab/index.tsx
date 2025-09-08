@@ -1,6 +1,8 @@
 import SearchConditionForm from '@/components/search-condition-form';
+import { FilterOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import {
+  Button,
   Card,
   Col,
   Form,
@@ -21,6 +23,7 @@ const GitlabSearchPage: React.FC = () => {
   const {
     keyword,
     token,
+    branch, // 获取 branch
     selectGroups,
     selectGroups1,
     allGroups,
@@ -82,9 +85,10 @@ const GitlabSearchPage: React.FC = () => {
         );
       }
       if (excludePattern) {
-        results = results.filter(
-          (item) => !micromatch.isMatch(item.file_path, excludePattern),
-        );
+        results = results.filter((item) => {
+          const bool = !micromatch.isMatch(item.file_path, excludePattern);
+          return bool;
+        });
       }
     } catch (e) {
       console.error('Error applying glob filter:', e);
@@ -103,11 +107,16 @@ const GitlabSearchPage: React.FC = () => {
     updateState(values);
   };
 
+  const onReset = () => {
+    form.resetFields();
+  };
+
   return (
     <Layout className="layout">
       <SearchConditionForm
         allGroups={allGroups}
         keyword={keyword}
+        branch={branch} // 传递 branch
         selectGroups={selectGroups}
         token={token}
         isExact={isExact}
@@ -155,6 +164,21 @@ const GitlabSearchPage: React.FC = () => {
               tooltip={{ title: 'e.g., **/{node_modules,dist}/**' }}
             >
               <Input placeholder="e.g., **/{node_modules,dist}/**" allowClear />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item labelCol={{ span: 0 }} wrapperCol={{ span: 24 }}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                style={{ marginRight: 20 }}
+                icon={<FilterOutlined />}
+              >
+                过滤
+              </Button>
+              <Button htmlType="button" onClick={onReset}>
+                重置
+              </Button>
             </Form.Item>
           </Col>
         </Row>

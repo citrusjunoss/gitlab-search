@@ -17,6 +17,7 @@ export interface CodeResult {
 export interface GitlabModelState {
   keyword: string;
   token: string;
+  branch: string; // 分支或标签
   isExact: boolean;
   selectGroups: string[];
   selectGroups1: string;
@@ -35,6 +36,7 @@ const useGitlabModel = () => {
   const [state, setState] = useState<GitlabModelState>({
     keyword: '',
     token: '',
+    branch: 'release',
     isExact: false,
     projectTotal: 0,
     projectSearched: 0,
@@ -96,6 +98,7 @@ const useGitlabModel = () => {
       projectSearched,
       isExact,
       selectGroups1,
+      branch, // 获取 branch
     } = state;
     if (!token || !keyword) {
       updateState({ status: '请输入 Token 或关键词' });
@@ -103,12 +106,13 @@ const useGitlabModel = () => {
     }
     updateState({ loading: true, status: '搜索中...', codeResult: [] });
     let projectsToSearch = allProjects;
-    if (selectGroups.length > 0) {
-      projectsToSearch = allProjects.filter((p) =>
-        isExact
+    if (selectGroups.length > 0 || selectGroups1) {
+      projectsToSearch = allProjects.filter((p) => {
+        const bool = isExact
           ? selectGroups.includes(p.namespace.id)
-          : p.namespace.full_path.includes(selectGroups1),
-      );
+          : p.namespace.full_path.includes(selectGroups1);
+        return bool;
+      });
     }
     if (projectsToSearch.length === 0) {
       updateState({
@@ -123,7 +127,13 @@ const useGitlabModel = () => {
     const promises = projectsToSearch.map((project) =>
       limit(async () => {
         try {
-          const res = await searchCodeInProject(project.id, keyword, token);
+          // 在 API 调用中传入 branch 作为 ref
+          const res = await searchCodeInProject(
+            project.id,
+            keyword,
+            token,
+            branch,
+          );
           if (res && res.length > 0) {
             const handledResult = res.map((code: any) => ({
               ...code,

@@ -41,20 +41,28 @@ export async function getGitlabProjects(groupId: number, token: string) {
  * @param projectId 项目 ID
  * @param keyword 搜索关键词
  * @param token GitLab Personal Access Token
+ * @param ref 分支或标签名
  */
 export async function searchCodeInProject(
   projectId: number,
   keyword: string,
   token: string,
+  ref?: string,
 ) {
+  const params: any = {
+    scope: 'blobs',
+    search: keyword,
+  };
+
+  if (ref) {
+    params.ref = ref;
+  }
+
   return request(`${GITLAB_API_BASE}/projects/${projectId}/search`, {
     method: 'GET',
     headers: {
       'PRIVATE-TOKEN': token,
     },
-    params: {
-      scope: 'blobs',
-      search: keyword,
-    },
+    params,
   });
 }
