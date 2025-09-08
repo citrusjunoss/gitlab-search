@@ -29,12 +29,11 @@ stages:
       else
         echo "registry=http://registry.qizhidao.net/" > ~/.npmrc
       fi
-    - pnpm install --frozen-lockfile
+    - pnpm install
 
 pages:
   stage: deploy
   script:
-    - pnpm install --frozen-lockfile # 安装依赖，使用 lockfile 确保版本一致性
     - pnpm run build # 执行项目构建命令
     - rm -rf public # 清理旧的 public 目录
     - mv dist public # 将构建产物（umijs 默认输出到 dist）移动到 public 目录
