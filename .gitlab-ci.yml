@@ -28,4 +28,4 @@ pages:
     paths:
       - public # 定义 public 目录为产物，GitLab Pages 会自动识别
   rules:
-    - if: $CI_COMMIT_BRANCH == master # 仅在默认分支（如 main/master）上运行
+    - if: '$CI_COMMIT_BRANCH == "master"' # 仅在默认分支（如 main/master）上运行
