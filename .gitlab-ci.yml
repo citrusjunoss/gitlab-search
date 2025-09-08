@@ -33,6 +33,8 @@ stages:
 
 pages:
   stage: deploy
+  <<: *cache_template
+  <<: *install_template
   script:
     - pnpm run build # 执行项目构建命令
     - rm -rf public # 清理旧的 public 目录
@@ -41,4 +43,4 @@ pages:
     paths:
       - public # 定义 public 目录为产物，GitLab Pages 会自动识别
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # 仅在默认分支（如 main/master）上运行
+    - if: $CI_COMMIT_BRANCH == master # 仅在默认分支（如 main/master）上运行
