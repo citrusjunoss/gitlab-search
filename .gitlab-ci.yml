@@ -1,26 +1,25 @@
-image: node:20 # 使用 Node.js 20 作为构建环境
+image: $CI_REGISTRY/$CI_REGISTRY_NAMESPACE/node:20
 
 stages:
   - build
   - deploy # 定义部署阶段
 
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - .pnpm-store # pnpm 缓存目录
-    - node_modules/ # node_modules 缓存目录
-
 pages:
   stage: deploy
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - node_modules/
+      - ~/.pnpm-store/
   before_script:
-    - echo "--- Before clean and install ---"
-    - ls -R
-    - rm -rf node_modules dist .umi # 明确清理
-    - echo "--- After clean, before install ---"
-    - ls -R
-    - pnpm install --frozen-lockfile # 使用 frozen-lockfile
-    - echo "--- After install (and max setup) ---"
-    - ls -R
+    - npm set registry http://registry.qizhidao.net/
+    - corepack enable
+    - corepack prepare pnpm@latest-10 --activate
+    - pnpm set registry http://registry.qizhidao.net/
+    - pnpm config set store-dir ~/.pnpm-store/
+    - pnpm install --frozen-lockfile
   script:
     - pnpm run build # 执行项目构建命令
     - rm -rf public # 清理旧的 public 目录
@@ -29,4 +28,4 @@ pages:
     paths:
       - public # 定义 public 目录为产物，GitLab Pages 会自动识别
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH # 仅在默认分支（如 main/master）上运行
+    - if: '$CI_COMMIT_BRANCH == "master"' # 仅在默认分支（如 main/master）上运行
