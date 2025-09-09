@@ -1,5 +1,4 @@
-import { IConfigFromPlugins } from './../src/.umi-production/core/pluginConfig';
-const routes: IConfigFromPlugins['routes'] = [
+const routes: any[] = [
   // user
   {
     path: '/gitlab',
