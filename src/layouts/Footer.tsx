@@ -13,7 +13,7 @@ export const defaultFooterDom = (
       {
         key: 'github',
         title: <GithubOutlined />,
-        href: 'https://github.com/ant-design/ant-design-pro',
+        href: 'https://github.com/citrusjunoss/gitlab-tools',
         blankTarget: true,
       },
     ]}

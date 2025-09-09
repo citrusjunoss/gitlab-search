@@ -9,6 +9,10 @@
 5. 支持搜索结果按照项目纬度导出 excel
 6. 支持点击卡片跳转到远程仓库的当前文件，并滚动到开始行
 
+## TODO
+
+[x] 批量删除过时的分支 [x] 批量更新某个公共依赖
+
 ## 感谢
 
 [sam-plus/gitlab-global-search](https://github.com/sam-plus/gitlab-global-search)
