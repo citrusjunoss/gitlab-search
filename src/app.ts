@@ -1,4 +1,5 @@
-import logoImg from '@/assets/logo.png';
+import logoImg from '@/assets/logo.svg';
+import { defaultFooterDom } from '@/layouts/Footer';
 
 // 运行时配置
 
@@ -9,7 +10,7 @@ export async function getInitialState(): Promise<{
   avatar: string;
 }> {
   return {
-    name: 'QZD CI/CD',
+    name: 'Gitlab Tools',
     avatar: logoImg,
   };
 }
@@ -17,6 +18,8 @@ export async function getInitialState(): Promise<{
 export const layout = () => {
   return {
     logo: logoImg,
+    footerRender: () => defaultFooterDom,
+    rightRender: () => null,
     menu: {
       locale: false,
     },

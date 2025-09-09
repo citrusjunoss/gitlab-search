@@ -1,1 +1,1 @@
-export const DEFAULT_NAME = 'QZD CI/CD';
+export const DEFAULT_NAME = 'GitLab Tools';

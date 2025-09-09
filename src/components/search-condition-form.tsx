@@ -78,7 +78,7 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
         </Col>
         <Col span={8}>
           {isExact ? (
-            <Form.Item label="Group" name="selectGroups">
+            <Form.Item label="群组" name="selectGroups">
               <Select
                 showSearch
                 mode="multiple"
@@ -99,7 +99,7 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
               </Select>
             </Form.Item>
           ) : (
-            <Form.Item label="Group" name="selectGroups1">
+            <Form.Item label="群组" name="selectGroups1">
               <Input placeholder="请输入搜索关键字" allowClear />
             </Form.Item>
           )}

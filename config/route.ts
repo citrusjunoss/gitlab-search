@@ -1,10 +1,16 @@
 const routes: any[] = [
   // user
   {
-    path: '/gitlab',
-    component: '@/pages/gitlab_temp/index.tsx',
-    icon: 'Gitlab',
-    name: 'GitLab 全局搜索',
+    path: '/',
+    component: '@/pages/index.tsx',
+    icon: 'Home',
+    name: '引导',
+  },
+  {
+    path: '/search',
+    component: '@/pages/search/index.tsx',
+    icon: 'Search',
+    name: '全局搜索',
   },
   {
     path: '/settings',

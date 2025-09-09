@@ -23,6 +23,7 @@ const SettingsPage: React.FC = () => {
     requestDelay,
     token,
     updateState,
+    gitlabUrl,
     allGroupsNumber,
     allProjectsNumber,
     fetchAllGroups,
@@ -35,16 +36,14 @@ const SettingsPage: React.FC = () => {
     form.setFieldsValue({
       concurrencyLimit,
       requestDelay,
+      gitlabUrl,
       token, // Display current token, but it's managed by SearchConditionForm
     });
     fetchAllGroups();
-  }, [concurrencyLimit, requestDelay, token]);
+  }, [concurrencyLimit, requestDelay, token, gitlabUrl]);
 
   const onFinish = (values: any) => {
     updateState({ ...values });
-    // Optionally, save to localforage here if not already handled by updateState
-    // For now, updateState directly modifies the model state, which is then used by search function
-    // Persistent saving will be handled in gitlabModel.ts
   };
 
   const onReset = () => {
@@ -85,23 +84,26 @@ const SettingsPage: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={onFinish}
-          initialValues={{ concurrencyLimit, requestDelay, token }}
+          initialValues={{ concurrencyLimit, requestDelay, token, gitlabUrl }}
         >
-          <Form.Item label="GitLab Token" name="token">
+          <Form.Item
+            label="GitLab 实例"
+            name="gitlabUrl"
+            rules={[{ required: true, message: '请输入gitlab url' }]}
+          >
             <Input />
           </Form.Item>
           <Form.Item
-            label="接口并发限制"
-            name="concurrencyLimit"
-            rules={[{ required: true, message: '请输入并发限制' }]}
+            label="GitLab Token"
+            name="token"
+            rules={[{ required: true, message: '请输入gitlab个人 token' }]}
           >
+            <Input />
+          </Form.Item>
+          <Form.Item label="接口并发限制" name="concurrencyLimit">
             <InputNumber min={1} max={20} />
           </Form.Item>
-          <Form.Item
-            label="接口请求延迟 (毫秒)"
-            name="requestDelay"
-            rules={[{ required: true, message: '请输入请求延迟' }]}
-          >
+          <Form.Item label="接口请求延迟 (毫秒)" name="requestDelay">
             <InputNumber min={0} max={5000} />
           </Form.Item>
           <Form.Item>

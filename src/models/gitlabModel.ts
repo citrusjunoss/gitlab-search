@@ -3,6 +3,8 @@ import {
   getGitlabProjects,
   searchCodeInProject,
 } from '@/services/gitlab';
+import { history } from '@umijs/max';
+import { Modal } from 'antd';
 import pLimit from 'p-limit';
 import { useCallback, useEffect, useState } from 'react';
 import { getItem, setItem } from '../utils/storage'; // 导入 storage 工具
@@ -20,6 +22,7 @@ export interface CodeResult {
 export interface GitlabModelState {
   keyword: string;
   token: string;
+  gitlabUrl: string;
   init: boolean;
   branch: string; // 分支或标签
   isExact: boolean;
@@ -44,6 +47,7 @@ const useGitlabModel = () => {
   const [state, setState] = useState<GitlabModelState>({
     keyword: '',
     token: '',
+    gitlabUrl: '',
     init: false,
     branch: 'release',
     isExact: false,
@@ -74,11 +78,14 @@ const useGitlabModel = () => {
       if (newState.requestDelay !== undefined) {
         setItem('requestDelay', newState.requestDelay, 'global');
       }
+      if (newState.gitlabUrl !== undefined) {
+        localStorage.setItem('gitlab_url', newState.gitlabUrl);
+      }
       if (newState.token !== prevState.token && newState.token) {
         localStorage.setItem('gitlab_token', newState.token);
         init = false; // token 变化需要重新初始化
       }
-
+      console.log('updateState', { ...prevState, ...newState, init });
       return { ...prevState, ...newState, init };
     });
   }, []);
@@ -247,6 +254,7 @@ const useGitlabModel = () => {
       );
       const savedRequestDelay = await getItem<number>('requestDelay', 'global');
       const gitlabToken = localStorage.getItem('gitlab_token') || '';
+      const gitlabUrl = localStorage.getItem('gitlab_url') || '';
       const updates: Partial<GitlabModelState> = {};
       if (savedConcurrencyLimit !== null) {
         updates.concurrencyLimit = savedConcurrencyLimit;
@@ -254,13 +262,30 @@ const useGitlabModel = () => {
       if (savedRequestDelay !== null) {
         updates.requestDelay = savedRequestDelay;
       }
-      if (gitlabToken !== null) {
+
+      if (gitlabUrl) {
+        updates.gitlabUrl = gitlabUrl;
+      }
+      if (gitlabToken) {
         updates.token = gitlabToken;
+      } else {
+        console.log('no token found');
+        updateState({ init: true });
       }
       if (Object.keys(updates).length > 0) {
         setState((prevState) => ({ ...prevState, ...updates }));
       }
+      if (!gitlabToken || !gitlabUrl) {
+        Modal.info({
+          title: '提示',
+          content: '请先在设置中配置 GitLab 实例地址和 Token',
+          onOk() {
+            history.push('/');
+          },
+        });
+      }
     };
+    console.log('no token found');
     loadSettings();
   }, []);
 
