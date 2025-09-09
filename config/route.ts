@@ -2,7 +2,7 @@ const routes: any[] = [
   // user
   {
     path: '/gitlab',
-    component: '@/pages/gitlab/index.tsx',
+    component: 'gitlab/index.tsx',
     name: 'GitLab 全局搜索',
   },
 ];
