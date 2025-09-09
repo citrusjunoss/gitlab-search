@@ -3,7 +3,7 @@ const routes: IConfigFromPlugins['routes'] = [
   // user
   {
     path: '/gitlab',
-    component: '@/pages/gitlab',
+    component: '@/pages/gitlab/index.tsx',
     name: 'GitLab 全局搜索',
   },
 ];
