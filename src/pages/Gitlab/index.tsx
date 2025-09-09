@@ -1,4 +1,5 @@
 import SearchConditionForm from '@/components/search-condition-form';
+import '@/pages/Gitlab/index.less';
 import { exportToExcel } from '@/utils/exportToExcel';
 import {
   BarChartOutlined,
@@ -23,7 +24,6 @@ import {
 } from 'antd';
 import micromatch from 'micromatch';
 import React, { useEffect, useMemo, useState } from 'react';
-import './index.less';
 
 const { Title, Text, Link } = Typography;
 
