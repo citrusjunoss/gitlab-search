@@ -154,7 +154,7 @@ const useGitlabModel = () => {
         }
         updateState({ projectSearched: tempNum + 1 });
         // eslint-disable-next-line no-promise-executor-return
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 800));
       }),
     );
     await Promise.all(promises);
