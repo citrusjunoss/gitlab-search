@@ -93,13 +93,22 @@ const GitlabSearchPage: React.FC = () => {
     let results = codeResult;
     try {
       if (includePattern) {
+        const includePatternsArray = includePattern
+          .split(',')
+          .map((p) => p.trim());
         results = results.filter((item) =>
-          micromatch.isMatch(item.file_path, includePattern),
+          micromatch.isMatch(item.file_path, includePatternsArray),
         );
       }
       if (excludePattern) {
+        const excludePatternsArray = excludePattern
+          .split(',')
+          .map((p) => p.trim());
         results = results.filter((item) => {
-          const bool = !micromatch.isMatch(item.file_path, excludePattern);
+          const bool = !micromatch.isMatch(
+            item.file_path,
+            excludePatternsArray,
+          );
           return bool;
         });
       }
@@ -196,79 +205,79 @@ const GitlabSearchPage: React.FC = () => {
           updateState={updateState}
         />
         <Divider style={{ borderColor: '#7cb305' }}>搜索结果</Divider>
-        <Title level={4}>
-          <Text type="secondary">{status}</Text> <Text> 匹配项目进度：</Text>
-          <Text type="secondary">
-            {projectSearched}/{projectTotal}
-          </Text>{' '}
-          <Text> 搜索结果：</Text>
-          <Text type="secondary">
-            {filteredCodeResult.length}/ {codeResult.length}
-          </Text>
-        </Title>
-        <Form
-          colon={false}
-          name="filterOptions"
-          onFinish={onFinish}
-          form={form}
-          labelAlign="left"
-        >
-          <Row gutter={24}>
-            <Col span={8}>
-              <Form.Item
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 16 }}
-                name="includePattern"
-                label="包含文件 (Glob)"
-                tooltip={{ title: 'e.g., src/**/*.js' }}
-              >
-                <Input placeholder="e.g., src/**/*.js" allowClear />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                labelCol={{ span: 8 }}
-                wrapperCol={{ span: 16 }}
-                name="excludePattern"
-                label="排除文件 (Glob)"
-                tooltip={{ title: 'e.g., **/{node_modules,dist}/**' }}
-              >
-                <Input
-                  placeholder="e.g., **/{node_modules,dist}/**"
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item labelCol={{ span: 0 }} wrapperCol={{ span: 24 }}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  style={{ marginRight: 20 }}
-                  icon={<FilterOutlined />}
-                >
-                  过滤
-                </Button>
-                <Button
-                  htmlType="button"
-                  onClick={onReset}
-                  style={{ marginRight: 20 }}
-                >
-                  重置
-                </Button>
-                <Button
-                  htmlType="button"
-                  onClick={onAnalyze}
-                  icon={<BarChartOutlined />}
-                >
-                  统计
-                </Button>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-
         <Spin spinning={loading}>
+          <Title level={4}>
+            <Text type="secondary">{status}</Text> <Text> 匹配项目进度：</Text>
+            <Text type="secondary">
+              {projectSearched}/{projectTotal}
+            </Text>{' '}
+            <Text> 搜索结果：</Text>
+            <Text type="secondary">
+              {filteredCodeResult.length}/ {codeResult.length}
+            </Text>
+          </Title>
+          <Form
+            colon={false}
+            name="filterOptions"
+            onFinish={onFinish}
+            form={form}
+            labelAlign="left"
+          >
+            <Row gutter={24}>
+              <Col span={8}>
+                <Form.Item
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 16 }}
+                  name="includePattern"
+                  label="包含文件 (Glob)"
+                  tooltip={{ title: 'e.g., src/**/*.js' }}
+                >
+                  <Input placeholder="e.g., src/**/*.js" allowClear />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item
+                  labelCol={{ span: 8 }}
+                  wrapperCol={{ span: 16 }}
+                  name="excludePattern"
+                  label="排除文件 (Glob)"
+                  tooltip={{ title: 'e.g., **/{node_modules,dist}/**' }}
+                >
+                  <Input
+                    placeholder="e.g., **/{node_modules,dist}/**"
+                    allowClear
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item labelCol={{ span: 0 }} wrapperCol={{ span: 24 }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    style={{ marginRight: 20 }}
+                    icon={<FilterOutlined />}
+                  >
+                    过滤
+                  </Button>
+                  <Button
+                    htmlType="button"
+                    onClick={onReset}
+                    style={{ marginRight: 20 }}
+                  >
+                    重置
+                  </Button>
+                  <Button
+                    htmlType="button"
+                    onClick={onAnalyze}
+                    icon={<BarChartOutlined />}
+                  >
+                    统计
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+
           {paginatedCodeResult?.map((code, index) => {
             const fileLink = `${code.project.web_url}/-/blob/${code.ref}/${code.path}#L${code.startline}`;
             return (
@@ -303,18 +312,18 @@ const GitlabSearchPage: React.FC = () => {
               </Card>
             );
           })}
-        </Spin>
 
-        {filteredCodeResult.length > pageSize && (
-          <Pagination
-            showQuickJumper
-            showSizeChanger
-            current={currentPage}
-            total={filteredCodeResult.length}
-            pageSize={pageSize}
-            onChange={handlePaginationChange}
-          />
-        )}
+          {filteredCodeResult.length > pageSize && (
+            <Pagination
+              showQuickJumper
+              showSizeChanger
+              current={currentPage}
+              total={filteredCodeResult.length}
+              pageSize={pageSize}
+              onChange={handlePaginationChange}
+            />
+          )}
+        </Spin>
       </Spin>
       <Modal
         title="搜索结果统计"

@@ -66,6 +66,7 @@ const useGitlabModel = () => {
 
   const updateState = useCallback((newState: Partial<GitlabModelState>) => {
     setState((prevState) => {
+      let init = true;
       // 保存配置
       if (newState.concurrencyLimit !== undefined) {
         setItem('concurrencyLimit', newState.concurrencyLimit, 'global');
@@ -73,11 +74,12 @@ const useGitlabModel = () => {
       if (newState.requestDelay !== undefined) {
         setItem('requestDelay', newState.requestDelay, 'global');
       }
-      if (newState.token !== undefined) {
+      if (newState.token !== prevState.token && newState.token) {
         localStorage.setItem('gitlab_token', newState.token);
+        init = false; // token 变化需要重新初始化
       }
 
-      return { ...prevState, ...newState };
+      return { ...prevState, ...newState, init };
     });
   }, []);
 
@@ -136,7 +138,6 @@ const useGitlabModel = () => {
         } catch (error) {}
         // eslint-disable-next-line no-promise-executor-return
         await new Promise((resolve) => setTimeout(resolve, state.requestDelay)); // 使用配置的请求延迟
-        console.info(`Fetched projects for group ${group.name}`);
         return result || [];
       }),
     );

@@ -41,11 +41,10 @@ const SettingsPage: React.FC = () => {
   }, [concurrencyLimit, requestDelay, token]);
 
   const onFinish = (values: any) => {
-    updateState(values);
+    updateState({ ...values });
     // Optionally, save to localforage here if not already handled by updateState
     // For now, updateState directly modifies the model state, which is then used by search function
     // Persistent saving will be handled in gitlabModel.ts
-    console.log('Settings saved:', values);
   };
 
   const onReset = () => {
