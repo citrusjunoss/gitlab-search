@@ -4,7 +4,8 @@ import {
   searchCodeInProject,
 } from '@/services/gitlab';
 import pLimit from 'p-limit';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { getItem, setItem } from '../utils/storage'; // 导入 storage 工具
 
 export interface CodeResult {
   file_path: string;
@@ -19,6 +20,7 @@ export interface CodeResult {
 export interface GitlabModelState {
   keyword: string;
   token: string;
+  init: boolean;
   branch: string; // 分支或标签
   isExact: boolean;
   selectGroups: string[];
@@ -29,15 +31,20 @@ export interface GitlabModelState {
   projectSearched: number;
   allGroups: any[];
   allProjects: any[];
+  allGroupsNumber: number;
+  allProjectsNumber: number;
   codeResult: CodeResult[];
   status: string;
   loading: boolean;
+  concurrencyLimit: number; // 并发限制
+  requestDelay: number; // 请求延迟
 }
 
 const useGitlabModel = () => {
   const [state, setState] = useState<GitlabModelState>({
     keyword: '',
     token: '',
+    init: false,
     branch: 'release',
     isExact: false,
     projectTotal: 0,
@@ -48,60 +55,128 @@ const useGitlabModel = () => {
     excludePattern: '',
     allGroups: [],
     allProjects: [],
+    allGroupsNumber: 0,
+    allProjectsNumber: 0,
     codeResult: [],
     status: '',
     loading: false,
+    concurrencyLimit: 5, // 默认并发限制
+    requestDelay: 1000, // 默认请求延迟
   });
 
   const updateState = useCallback((newState: Partial<GitlabModelState>) => {
-    setState((prevState) => ({ ...prevState, ...newState }));
+    setState((prevState) => {
+      // 保存配置
+      if (newState.concurrencyLimit !== undefined) {
+        setItem('concurrencyLimit', newState.concurrencyLimit, 'global');
+      }
+      if (newState.requestDelay !== undefined) {
+        setItem('requestDelay', newState.requestDelay, 'global');
+      }
+      if (newState.token !== undefined) {
+        localStorage.setItem('gitlab_token', newState.token);
+      }
+
+      return { ...prevState, ...newState };
+    });
   }, []);
 
-  const fetchAllGroups = useCallback(async (token: string) => {
+  const fetchAllGroupsRemote = async () => {
+    const token = localStorage.getItem('gitlab_token') || '';
     if (!token) return [];
-    const cachedGroups = JSON.parse(
-      localStorage.getItem('gitlabGroups') || '[]',
-    );
-    if (cachedGroups.length > 0) {
-      updateState({ allGroups: cachedGroups });
-      return cachedGroups;
+    let allGroups: any[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const res = await getGitlabGroups(token, page); // 假设第二个参数是页码
+      allGroups = allGroups.concat(res);
+      if (res.length < 100) {
+        hasMore = false;
+      } else {
+        page += 1;
+      }
     }
-    const res = await getGitlabGroups(token);
-    if (res) {
-      localStorage.setItem('gitlabGroups', JSON.stringify(res));
-      updateState({ allGroups: res });
-      return res;
+
+    if (allGroups.length > 0) {
+      await setItem('gitlabGroups', allGroups, token);
+      updateState({ allGroups, allGroupsNumber: allGroups.length });
+      return allGroups;
     }
     return [];
+  };
+
+  const fetchAllGroups = useCallback(async () => {
+    const token = localStorage.getItem('gitlab_token') || '';
+    if (!token) return [];
+    const cachedGroups = await getItem<any[]>('gitlabGroups', token);
+    if (cachedGroups && cachedGroups.length > 0) {
+      updateState({
+        allGroups: cachedGroups,
+        allGroupsNumber: cachedGroups.length,
+      });
+      return cachedGroups;
+    }
+    return await fetchAllGroupsRemote();
   }, []);
 
-  const fetchAllProjects = useCallback(async (token: string, groups: any[]) => {
+  const fetchAllProjectsRemote = async () => {
+    const limit = pLimit(state.concurrencyLimit); // 使用配置的并发限制
+    const token = localStorage.getItem('gitlab_token') || '';
+    const groups = state.allGroups;
     if (!token || !groups || groups.length === 0) return;
-    const cachedProjects = JSON.parse(
-      localStorage.getItem('gitlabProjects') || '[]',
+    const promises = groups.map((group) =>
+      limit(async () => {
+        let result = [];
+        try {
+          const res = await getGitlabProjects(group.id, token);
+          if (res && res.length > 0) {
+            result = res;
+          }
+        } catch (error) {}
+        // eslint-disable-next-line no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, state.requestDelay)); // 使用配置的请求延迟
+        console.info(`Fetched projects for group ${group.name}`);
+        return result || [];
+      }),
     );
-    if (cachedProjects.length > 0) {
-      updateState({ allProjects: cachedProjects });
-      return;
-    }
-    const promises = groups.map((group) => getGitlabProjects(group.id, token));
     const results = await Promise.all(promises);
     const allProjects = results.flat(1);
-    localStorage.setItem('gitlabProjects', JSON.stringify(allProjects));
-    updateState({ allProjects });
-  }, []);
+    await setItem('gitlabProjects', allProjects, token);
+    updateState({
+      allProjects,
+      allProjectsNumber: allProjects.length,
+      init: true,
+    });
+  };
+
+  const fetchAllProjects = useCallback(async () => {
+    const token = localStorage.getItem('gitlab_token') || '';
+    if (!token || !state.allGroups || state.allGroups.length === 0) return;
+    const cachedProjects = await getItem<any[]>('gitlabProjects', token);
+    if (cachedProjects && cachedProjects.length > 0) {
+      updateState({
+        allProjects: cachedProjects,
+        allProjectsNumber: cachedProjects.length,
+        init: true,
+      });
+      return;
+    }
+    await fetchAllProjectsRemote();
+  }, [state.allGroups]);
 
   const search = useCallback(async () => {
     const {
-      token,
       keyword,
       selectGroups,
       allProjects,
-      projectSearched,
       isExact,
       selectGroups1,
-      branch, // 获取 branch
+      branch,
+      concurrencyLimit, // 获取并发限制
+      requestDelay, // 获取请求延迟
     } = state;
+    const token = localStorage.getItem('gitlab_token') || '';
     if (!token || !keyword) {
       updateState({ status: '请输入 Token 或关键词' });
       return;
@@ -124,13 +199,11 @@ const useGitlabModel = () => {
       return;
     }
     updateState({ projectTotal: projectsToSearch.length, projectSearched: 0 });
-    const limit = pLimit(5);
-    const tempNum = projectSearched;
+    const limit = pLimit(concurrencyLimit); // 使用配置的并发限制
     let allResults: CodeResult[] = [];
     const promises = projectsToSearch.map((project) =>
       limit(async () => {
         try {
-          // 在 API 调用中传入 branch 作为 ref
           const res = await searchCodeInProject(
             project.id,
             keyword,
@@ -141,8 +214,8 @@ const useGitlabModel = () => {
             const handledResult = res.map((code: any) => ({
               ...code,
               project,
-              path: code.path, // 添加 path
-              ref: code.ref, // 添加 ref
+              path: code.path,
+              ref: code.ref,
               codeLines: code.data.split(/\n/g).length - 1,
               file_path: `${project.path_with_namespace}/blob/${code.ref}/${code.path}`,
             }));
@@ -152,20 +225,56 @@ const useGitlabModel = () => {
         } catch (error) {
           console.error(`Failed to search in project ${project.name}:`, error);
         }
-        updateState({ projectSearched: tempNum + 1 });
+        setState((prev) => ({
+          ...prev,
+          projectSearched: prev.projectSearched + 1,
+        }));
         // eslint-disable-next-line no-promise-executor-return
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, requestDelay)); // 使用配置的请求延迟
       }),
     );
     await Promise.all(promises);
     updateState({ loading: false, status: `搜索完毕` });
   }, [state]);
 
+  // 加载配置
+  useEffect(() => {
+    const loadSettings = async () => {
+      const savedConcurrencyLimit = await getItem<number>(
+        'concurrencyLimit',
+        'global',
+      );
+      const savedRequestDelay = await getItem<number>('requestDelay', 'global');
+      const gitlabToken = localStorage.getItem('gitlab_token') || '';
+      const updates: Partial<GitlabModelState> = {};
+      if (savedConcurrencyLimit !== null) {
+        updates.concurrencyLimit = savedConcurrencyLimit;
+      }
+      if (savedRequestDelay !== null) {
+        updates.requestDelay = savedRequestDelay;
+      }
+      if (gitlabToken !== null) {
+        updates.token = gitlabToken;
+      }
+      if (Object.keys(updates).length > 0) {
+        setState((prevState) => ({ ...prevState, ...updates }));
+      }
+    };
+    loadSettings();
+  }, []);
+
+  useEffect(() => {
+    if (state.allGroups.length > 0) {
+      fetchAllProjects();
+    }
+  }, [state.allGroups]);
+
   return {
     ...state,
     updateState,
     fetchAllGroups,
-    fetchAllProjects,
+    fetchAllGroupsRemote,
+    fetchAllProjectsRemote,
     search,
   };
 };

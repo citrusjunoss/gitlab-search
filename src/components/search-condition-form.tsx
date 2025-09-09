@@ -1,5 +1,5 @@
 import { GitlabModelState } from '@/models/gitlabModel';
-import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined } from '@ant-design/icons';
 import { Button, Col, Form, Input, Row, Select, Switch } from 'antd';
 import React, { useEffect } from 'react';
 
@@ -8,7 +8,6 @@ interface Props {
   keyword: string;
   branch: string;
   selectGroups: Array<string>;
-  token: string;
   includePattern: string;
   excludePattern: string;
   selectGroups1: string;
@@ -23,7 +22,6 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
   branch,
   selectGroups,
   selectGroups1,
-  token,
   isExact,
   searchHandle,
   updateState,
@@ -36,9 +34,8 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
       branch,
       selectGroups,
       selectGroups1,
-      token,
     });
-  }, [keyword, branch, selectGroups, selectGroups1, token]);
+  }, [keyword, branch, selectGroups, selectGroups1]);
 
   const onFinish = (values: any) => {
     searchHandle(values);
@@ -48,7 +45,6 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
     form.resetFields();
     updateState({
       keyword: '',
-      token: '',
       branch: '',
       selectGroups: [],
       selectGroups1: '',
@@ -58,9 +54,6 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
   };
 
   const onValuesChange = (changedValues: any) => {
-    if (changedValues.token !== undefined) {
-      localStorage.setItem('gitlab_token', changedValues.token);
-    }
     updateState(changedValues);
   };
 
@@ -81,19 +74,6 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
         <Col span={8}>
           <Form.Item label="关键字" name="keyword" rules={[{ required: true }]}>
             <Input placeholder="请输入搜索关键字" allowClear />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            label="Token"
-            name="token"
-            rules={[{ required: true }]}
-            tooltip={{
-              title: '可在gitlab中生成access token',
-              icon: <InfoCircleOutlined />,
-            }}
-          >
-            <Input placeholder="请输入access token" allowClear />
           </Form.Item>
         </Col>
         <Col span={8}>
@@ -124,14 +104,14 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
             </Form.Item>
           )}
         </Col>
-      </Row>
-      <Row gutter={24}>
         <Col span={8}>
           <Form.Item label="分支/标签" name="branch">
             <Input placeholder="默认为项目的默认分支" allowClear />
           </Form.Item>
         </Col>
-        <Col span={8}>
+      </Row>
+      <Row gutter={24}>
+        <Col span={24}>
           <Switch
             checkedChildren="精确群组"
             unCheckedChildren="模糊群组"

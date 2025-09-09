@@ -7,7 +7,7 @@ const GITLAB_API_BASE = 'https://gitlab.qizhidao.com/api/v4';
  * 获取所有 GitLab 组
  * @param token GitLab Personal Access Token
  */
-export async function getGitlabGroups(token: string) {
+export async function getGitlabGroups(token: string, page: number = 1) {
   return request(`${GITLAB_API_BASE}/groups`, {
     method: 'GET',
     headers: {
@@ -15,6 +15,7 @@ export async function getGitlabGroups(token: string) {
     },
     params: {
       per_page: 100, // 假设最多100个组
+      page, // 分页
     },
   });
 }

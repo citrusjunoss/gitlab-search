@@ -9,6 +9,7 @@ export default defineConfig({
   request: {},
   layout: {
     title: 'QZD CI/CD',
+    menu: {}, // 启用菜单
   },
   routes,
   esbuildMinifyIIFE: true, // 解决 esbuild helpers 冲突问题
