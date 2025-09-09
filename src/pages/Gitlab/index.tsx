@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   Col,
+  Divider,
   Form,
   Input,
   Layout,
@@ -190,6 +191,7 @@ const GitlabSearchPage: React.FC = () => {
         searchHandle={handleSearch}
         updateState={updateState}
       />
+      <Divider style={{ borderColor: '#7cb305' }}>搜索结果</Divider>
       <Title level={4}>
         <Text type="secondary">{status}</Text> <Text> 匹配项目进度：</Text>
         <Text type="secondary">

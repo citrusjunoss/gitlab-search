@@ -1,7 +1,7 @@
 import { request } from '@umijs/max';
 
 // 注意：这里的 GitLab URL 应该配置在代理中，例如 /api/v4
-const GITLAB_API_BASE = '/api/v4';
+const GITLAB_API_BASE = 'https://gitlab.qizhidao.com/api/v4';
 
 /**
  * 获取所有 GitLab 组

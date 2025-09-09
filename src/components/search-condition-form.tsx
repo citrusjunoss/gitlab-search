@@ -78,12 +78,12 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
       labelAlign="left"
     >
       <Row gutter={24}>
-        <Col span={6}>
+        <Col span={8}>
           <Form.Item label="关键字" name="keyword" rules={[{ required: true }]}>
             <Input placeholder="请输入搜索关键字" allowClear />
           </Form.Item>
         </Col>
-        <Col span={6}>
+        <Col span={8}>
           <Form.Item
             label="Token"
             name="token"
@@ -96,7 +96,7 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
             <Input placeholder="请输入access token" allowClear />
           </Form.Item>
         </Col>
-        <Col span={6}>
+        <Col span={8}>
           {isExact ? (
             <Form.Item label="Group" name="selectGroups">
               <Select
@@ -124,14 +124,21 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
             </Form.Item>
           )}
         </Col>
-        <Col span={6}>
+      </Row>
+      <Row gutter={24}>
+        <Col span={8}>
           <Form.Item label="分支/标签" name="branch">
             <Input placeholder="默认为项目的默认分支" allowClear />
           </Form.Item>
         </Col>
-      </Row>
-      <Row gutter={24}>
         <Col span={8}>
+          <Switch
+            checkedChildren="精确群组"
+            unCheckedChildren="模糊群组"
+            style={{ marginRight: 20 }}
+            checked={isExact}
+            onChange={onChange}
+          />
           <Button
             type="primary"
             htmlType="submit"
@@ -143,13 +150,6 @@ const SearchConditionForm: React.FunctionComponent<Props> = ({
           <Button htmlType="button" onClick={onReset}>
             重置
           </Button>
-          <Switch
-            checkedChildren="精确群组"
-            unCheckedChildren="模糊群组"
-            style={{ marginLeft: 20 }}
-            checked={isExact}
-            onChange={onChange}
-          />
         </Col>
       </Row>
     </Form>
