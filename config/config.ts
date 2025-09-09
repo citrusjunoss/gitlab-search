@@ -12,8 +12,8 @@ export default defineConfig({
     menu: {}, // 启用菜单
   },
   routes,
-  base: '/global-search/', // 设置应用的基础路径
-  publicPath: '/global-search/', // 设置静态资源的公共路径
+  base: '/gitlab-tools/', // 设置应用的基础路径
+  publicPath: '/gitlab-tools/', // 设置静态资源的公共路径
   esbuildMinifyIIFE: true, // 解决 esbuild helpers 冲突问题
   exportStatic: {}, // 启用静态导出，为每个路由生成独立的 HTML 文件
   npmClient: 'pnpm',
